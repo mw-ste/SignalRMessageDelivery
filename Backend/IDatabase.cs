@@ -1,6 +1,6 @@
 ﻿using MediatR;
+using Newtonsoft.Json;
 using System.Collections.Concurrent;
-using System.Text.Json;
 
 namespace Backend;
 
@@ -9,6 +9,8 @@ public interface IDatabase<T, TId> where T : Aggregate<TId>
     Task<IEnumerable<T>> List();
 
     Task<T> Find(TId id);
+
+    Task<T?> TryFind(TId id);
 
     Task Save(T entity, IMediator mediator);
 
@@ -23,11 +25,11 @@ public abstract class InMemoryDatabase<T, TId> : IDatabase<T, TId>
         new ConcurrentDictionary<TId, string>();
 
     public Task<IEnumerable<T>> List() =>
-        Task.FromResult(_database.Select(kvp => kvp.Value).Select(s => JsonSerializer.Deserialize<T>(s)))!;
+        Task.FromResult(_database.Select(kvp => TryFindInternal(kvp.Key)!));
 
     public Task<T> Find(TId id)
     {
-        var aggregate = JsonSerializer.Deserialize<T>(_database[id]);
+        var aggregate = TryFindInternal(id);
         if (aggregate == null)
         {
             throw new Exception($"Not aggregate of type {typeof(T)} with id {id} found!");
@@ -35,9 +37,22 @@ public abstract class InMemoryDatabase<T, TId> : IDatabase<T, TId>
         return Task.FromResult(aggregate);
     }
 
+    public Task<T?> TryFind(TId id)
+    {
+        var aggregate = TryFindInternal(id);
+        return Task.FromResult(aggregate);
+    }
+
+    private T? TryFindInternal(TId id)
+    {
+        return _database.TryGetValue(id, out var value)
+            ? JsonConvert.DeserializeObject<T?>(value)
+            : null;
+    }
+
     public Task Save(T entity, IMediator mediator)
     {
-        _database[entity.Id]= JsonSerializer.Serialize(entity);
+        _database[entity.Id]= JsonConvert.SerializeObject(entity);
         return entity.SendEvents(mediator);
     }
 

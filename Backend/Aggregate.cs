@@ -11,7 +11,7 @@ public abstract class Aggregate<TId>
         Id = id;
     }
 
-    public TId Id { get; private set; }
+    public TId Id { get; set; }
 
     public void AddEvent(INotification notification) => _events.Add(notification);
 

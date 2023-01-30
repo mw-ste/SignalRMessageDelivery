@@ -4,8 +4,7 @@ namespace Backend;
 
 public class Sender : Aggregate<string>
 {
-    public List<string> MessageLog { get; set; } = new List<string>();
-
+    public List<string> MessageLog { get; init; } = new List<string>();
 
     public Sender(string id) : base(id)
     {

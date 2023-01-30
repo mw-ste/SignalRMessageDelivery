@@ -13,16 +13,28 @@ public interface ISignalRDispatcher
 
 public class SignalRDispatcher : ISignalRDispatcher
 {
+    private readonly IPendingMessageDatabase _pendingMessageDatabase;
     private readonly IMediator _mediator;
 
-    public SignalRDispatcher(IMediator mediator)
+    public SignalRDispatcher(
+        IPendingMessageDatabase pendingMessageDatabase,
+        IMediator mediator)
     {
+        _pendingMessageDatabase = pendingMessageDatabase;
         _mediator = mediator;
     }
 
-    public Task PublishClientMessageAnswer(MessageContext messageContext, string messageAnswer)
+    public async Task PublishClientMessageAnswer(MessageContext messageContext, string messageAnswer)
     {
+        var pendingMessage = await _pendingMessageDatabase.TryFind(messageContext.MessageId);
+        if (pendingMessage == null)
+        {
+            return;
+        }
+
+        await _pendingMessageDatabase.Delete(messageContext.MessageId);
+
         var @event = new MessageAnswerReceivedEvent(messageContext.Receiver, messageContext.Sender, messageAnswer, messageContext.MessageId);
-        return _mediator.Publish(@event);
+        await _mediator.Publish(@event);
     }
 }
