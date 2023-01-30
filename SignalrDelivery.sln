@@ -3,19 +3,16 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Backend", "Backend\Backend.csproj", "{32C48218-081F-4C9A-9B4D-D82082A3E923}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Backend", "Backend\Backend.csproj", "{32C48218-081F-4C9A-9B4D-D82082A3E923}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignalrClient", "SignalrClient\SignalrClient.csproj", "{3ED7600A-204E-4861-8E3D-CA0352877D1C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignalRClient", "SignalrClient\SignalRClient.csproj", "{3ED7600A-204E-4861-8E3D-CA0352877D1C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csproj", "{894A449A-20B1-43C1-8E49-CCE7E0BBF401}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared", "Shared\Shared.csproj", "{894A449A-20B1-43C1-8E49-CCE7E0BBF401}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{32C48218-081F-4C9A-9B4D-D82082A3E923}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -30,5 +27,11 @@ Global
 		{894A449A-20B1-43C1-8E49-CCE7E0BBF401}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{894A449A-20B1-43C1-8E49-CCE7E0BBF401}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{894A449A-20B1-43C1-8E49-CCE7E0BBF401}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C2560097-3D5E-40AF-9501-B4B550AFF435}
 	EndGlobalSection
 EndGlobal
