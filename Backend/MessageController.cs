@@ -46,4 +46,11 @@ public class MessageController : ControllerBase
         var senders = await _senderDatabase.List();
         return Ok(senders);
     }
+
+    [HttpGet(nameof(ListMessagesForSender))]
+    public async Task<ActionResult<string[]>> ListMessagesForSender([Required] string senderId)
+    {
+        var sender = await _senderDatabase.Find(senderId);
+        return Ok(sender.MessageLog.ToArray());
+    }
 }

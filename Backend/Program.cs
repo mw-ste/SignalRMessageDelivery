@@ -13,6 +13,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
 builder.Services.AddSingleton<ISenderDatabase>(new SenderInMemoryDatabase());
+builder.Services.AddTransient<ISignalRGateway, SignalRGateway>();
+builder.Services.AddTransient<ISignalRDispatcher, SignalRDispatcher>();
 
 //adding local SignalR
 builder.Services.AddSignalR();
