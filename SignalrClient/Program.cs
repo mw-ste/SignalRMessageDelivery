@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
 using SignalRClient;
 
+var closed = false;
 string? name = null;
 while (string.IsNullOrEmpty(name))
 {
@@ -15,5 +16,13 @@ var connection = new HubConnectionBuilder()
 var client = new SignalREchoClient(connection, name);
 await client.ConnectToHub();
 await client.RegisterClient();
+client.ConnectionClosed += () =>
+{
+    closed = true;
+    Console.WriteLine("Connection closed, press enter to exit");
+};
 
-Console.ReadLine();
+while (!closed)
+{
+    Console.ReadLine();
+}

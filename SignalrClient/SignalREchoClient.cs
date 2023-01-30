@@ -8,6 +8,8 @@ public class SignalREchoClient : ISignalRClient
     private readonly HubConnection _hubConnection;
     private readonly string _name;
 
+    public event Action? ConnectionClosed;
+
     public SignalREchoClient(HubConnection hubConnection, string name)
     {
         _hubConnection = hubConnection;
@@ -66,5 +68,6 @@ public class SignalREchoClient : ISignalRClient
     {
         await _hubConnection.StopAsync();
         await _hubConnection.DisposeAsync();
+        ConnectionClosed?.Invoke();
     }
 }
