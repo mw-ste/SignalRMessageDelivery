@@ -3,7 +3,7 @@ using Shared;
 
 namespace Backend.SignalR;
 
-public class SignalRHub : Hub<ISignalrClient>, ISignalrHub
+public class SignalRHub : Hub<ISignalRClient>, ISignalRHub
 {
     private readonly ISignalRDispatcher _signalRDispatcher;
 

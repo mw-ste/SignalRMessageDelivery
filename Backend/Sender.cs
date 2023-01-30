@@ -4,11 +4,13 @@ namespace Backend;
 
 public class Sender : Aggregate<string>
 {
-    private readonly List<string> _messageLog = new List<string>();
+    private List<string> _messageLog = new List<string>();
     public IEnumerable<string> MessageLog => _messageLog;
+
 
     public Sender(string id) : base(id)
     {
+        _messageLog = new List<string>();
     }
 
     public void SendMessage(string message, string client)
@@ -23,6 +25,6 @@ public class Sender : Aggregate<string>
         LogMessage(message, messageId, client, Id);
     }
 
-    private void LogMessage(string message, string messageId, string sender, string receiver) => 
+    private void LogMessage(string message, string messageId, string sender, string receiver) =>
         _messageLog.Add($"[{messageId}] {sender} --> {receiver}: {message}");
 }

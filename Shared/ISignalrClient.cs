@@ -1,6 +1,6 @@
 ﻿namespace Shared;
 
-public interface ISignalrClient
+public interface ISignalRClient
 {
     Task ReceiveClientMessage(MessageContext messageContext, string message);
     Task ReceiveRegistrationSuccess();

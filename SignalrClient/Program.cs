@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
-using SignalrClient;
+using SignalRClient;
 
 string? name = null;
 while (string.IsNullOrEmpty(name))

@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
 using Shared;
 
-namespace SignalrClient;
+namespace SignalRClient;
 
-public class SignalREchoClient : ISignalrClient
+public class SignalREchoClient : ISignalRClient
 {
     private readonly HubConnection _hubConnection;
     private readonly string _name;
@@ -25,8 +25,8 @@ public class SignalREchoClient : ISignalrClient
     private Task OnClosed(Exception? exception)
     {
         Console.WriteLine(
-            $"Hub connection \"{_hubConnection.ConnectionId}\" was closed!\n" +
-            $"Reason: \"{exception}\"");
+            "Hub connection was closed!\n" +
+            $"Reason: \"{exception?.Message}\"");
 
         return Disconnect();
     }
