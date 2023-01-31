@@ -1,8 +1,8 @@
 using Backend;
 using Backend.SignalR;
 using MediatR;
-using Microsoft.AspNetCore.SignalR;
 using System.Reflection;
+using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +27,17 @@ builder.Services.AddSignalR(hubOptions =>
 
 //adding MediatR
 builder.Services.AddMediatR(Assembly.GetExecutingAssembly());
+
+builder.Services.AddMassTransit(x =>
+{
+    var assembly = Assembly.GetEntryAssembly();
+    x.AddConsumers(assembly);
+
+    x.UsingInMemory((ctx, cfg) =>
+    {
+        cfg.ConfigureEndpoints(ctx);
+    });
+});
 
 //background service to periodically check for messages without answer
 builder.Services.AddHostedService(s => s.GetService<MessageSchedulerBackgroundService>()!);

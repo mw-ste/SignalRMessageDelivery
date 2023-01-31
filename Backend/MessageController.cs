@@ -3,6 +3,7 @@ using Backend.SignalR;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using MassTransit;
 
 namespace Backend;
 
@@ -14,17 +15,20 @@ public class MessageController : ControllerBase
     private readonly IPendingMessageDatabase _pendingMessageDatabase;
     private readonly IMediator _mediator;
     private readonly MessageSchedulerBackgroundService _messageScheduler;
+    private readonly IBus _bus;
 
     public MessageController(
         ISenderDatabase senderDatabase,
         IPendingMessageDatabase pendingMessageDatabase,
         IMediator mediator,
-        MessageSchedulerBackgroundService messageScheduler)
+        MessageSchedulerBackgroundService messageScheduler,
+        IBus bus)
     {
         _senderDatabase = senderDatabase;
         _pendingMessageDatabase = pendingMessageDatabase;
         _mediator = mediator;
         _messageScheduler = messageScheduler;
+        _bus = bus;
     }
 
     [HttpPost(nameof(SendMessageToClient))]
@@ -40,6 +44,7 @@ public class MessageController : ControllerBase
     [HttpPost(nameof(AddSender))]
     public async Task<ActionResult> AddSender([Required] string senderId)
     {
+        await _bus.Publish(new MassTransitMessageEvent($"New sender: {senderId}"));
         await _senderDatabase.Save(new Sender(senderId), _mediator);
         return Ok();
     }
