@@ -16,8 +16,8 @@ public class MessageFailedEventHandler : INotificationHandler<MessageFailedEvent
 
     public Task Handle(MessageFailedEvent notification, CancellationToken cancellationToken)
     {
-        _logger.LogWarning($"Failed to deliver message with id {notification.MessageContext.MessageId} " +
-                           $"to client {notification.MessageContext.Sender}!");
+        //_logger.LogWarning($"Failed to deliver message with id {notification.MessageContext.MessageId} " +
+        //                   $"to client {notification.MessageContext.Sender}!");
         return Task.CompletedTask;
     }
 }

@@ -23,7 +23,8 @@ builder.Services.AddSingleton(s => new MessageSchedulerBackgroundService(
     s.GetService<IPendingMessageDatabase>()!,
     s.GetService<IHubContext<SignalRHub>>()!,
     s.GetService<IMediator>()!,
-    s.GetService<ILogger<MessageSchedulerBackgroundService>>()!));
+    s.GetService<ILogger<MessageSchedulerBackgroundService>>()!,
+    s.GetService<ILogger<PendingMessage>>()!));
 
 //adding local SignalR
 builder.Services.AddSignalR(hubOptions =>

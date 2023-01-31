@@ -37,27 +37,27 @@ public class PendingMessage : Aggregate<string>
         Arguments = arguments;
     }
 
-    public Task Send(IHubContext<SignalRHub> hubContext)
+    public Task Send(IHubContext<SignalRHub> hubContext, ILogger<PendingMessage> logger)
     {
         TimeToLive -= 1;
         SendTimestamp = DateTime.Now.ToUniversalTime();
 
-        return SendInternal(hubContext.Clients.Groups(MessageContext.Receiver));
+        return SendInternal(hubContext.Clients.Groups(MessageContext.Receiver), logger);
     }
 
-    private Task SendInternal(IClientProxy clientProxy)
+    private static void LogInformationWithTimeStamp(string text, ILogger<PendingMessage> logger)
     {
-        return Arguments.Length switch
-        {
-            0 => clientProxy.SendAsync(Method, MessageContext),
-            1 => clientProxy.SendAsync(Method, MessageContext, Arguments[0]),
-            2 => clientProxy.SendAsync(Method, MessageContext, Arguments[0], Arguments[1]),
-            3 => clientProxy.SendAsync(Method, MessageContext, Arguments[0], Arguments[1], Arguments[2]),
-            _ => throw new Exception($"Too many arguments: {Arguments.Length}! I hate this SignalR interface!")
-        };
+        logger.LogInformation($"[{DateTime.Now.ToUniversalTime()}] {text}");
     }
 
-    public async Task<bool> Retry(IHubContext<SignalRHub> hubContext, IMediator mediator)
+    private async Task SendInternal(IClientProxy clientProxy, ILogger<PendingMessage> logger)
+    {
+        LogInformationWithTimeStamp($"starting SendCoreAsync for {MessageContext}", logger);
+        await clientProxy.SendCoreAsync(Method, Arguments.Prepend(MessageContext).ToArray());
+        LogInformationWithTimeStamp($"finished SendCoreAsync for {MessageContext}", logger);
+    }
+
+    public async Task<bool> Retry(IHubContext<SignalRHub> hubContext, IMediator mediator, ILogger<PendingMessage> logger)
     {
         if (Failed)
         {
@@ -65,7 +65,7 @@ public class PendingMessage : Aggregate<string>
             return false;
         }
 
-        await Send(hubContext);
+        await Send(hubContext, logger);
         return true;
     }
 }

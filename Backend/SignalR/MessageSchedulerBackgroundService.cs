@@ -9,6 +9,7 @@ public class MessageSchedulerBackgroundService : BackgroundService
     private readonly IHubContext<SignalRHub> _hubContext;
     private readonly IMediator _mediator;
     private readonly ILogger<MessageSchedulerBackgroundService> _logger;
+    private readonly ILogger<PendingMessage> _messageLogger;
 
     private readonly List<PendingMessage> _deadMessages = new List<PendingMessage>();
     public IEnumerable<PendingMessage> DeadMessages => _deadMessages;
@@ -17,12 +18,14 @@ public class MessageSchedulerBackgroundService : BackgroundService
         IPendingMessageDatabase pendingMessageDatabase,
         IHubContext<SignalRHub> hubContext,
         IMediator mediator,
-        ILogger<MessageSchedulerBackgroundService> logger)
+        ILogger<MessageSchedulerBackgroundService> logger,
+        ILogger<PendingMessage> messageLogger)
     {
         _pendingMessageDatabase = pendingMessageDatabase;
         _hubContext = hubContext;
         _mediator = mediator;
         _logger = logger;
+        _messageLogger = messageLogger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -37,14 +40,14 @@ public class MessageSchedulerBackgroundService : BackgroundService
                     continue;
                 }
 
-                if (await pendingMessage.Retry(_hubContext, _mediator))
+                if (await pendingMessage.Retry(_hubContext, _mediator, _messageLogger))
                 {
-                    _logger.LogInformation($"Retrying message: {pendingMessage.MessageContext}");
+                    _logger.LogWarning($"Retrying message: {pendingMessage.MessageContext}");
                     await _pendingMessageDatabase.Save(pendingMessage, _mediator);
                     continue;
                 }
 
-                _logger.LogInformation($"Failed to get answer for message: {pendingMessage.MessageContext}");
+                _logger.LogWarning($"Failed to get answer for message: {pendingMessage.MessageContext}");
                 _deadMessages.Add(pendingMessage);
                 await _pendingMessageDatabase.Delete(pendingMessage.Id);
             }
@@ -59,7 +62,7 @@ public class MessageSchedulerBackgroundService : BackgroundService
         {
             _deadMessages.Remove(pendingMessage);
             pendingMessage.TimeToLive = 3;
-            await pendingMessage.Retry(_hubContext, _mediator);
+            await pendingMessage.Retry(_hubContext, _mediator, _messageLogger);
             await _pendingMessageDatabase.Save(pendingMessage, _mediator);
         }
 
@@ -69,13 +72,5 @@ public class MessageSchedulerBackgroundService : BackgroundService
             .ToArray();
 
         await Task.WhenAll(x);
-
-        //foreach (var pendingMessage in _deadMessages.ToList())
-        //{
-        //    _deadMessages.Remove(pendingMessage);
-        //    pendingMessage.TimeToLive = 3;
-        //    await pendingMessage.Retry(_hubContext, _mediator);
-        //    await _pendingMessageDatabase.Save(pendingMessage, _mediator);
-        //}
     }
 }

@@ -26,7 +26,7 @@ public class SignalREchoClient : ISignalRClient
 
     private Task OnClosed(Exception? exception)
     {
-        Console.WriteLine(
+        LogToConsoleWithTimeStamp(
             "Hub connection was closed!\n" +
             $"Reason: \"{exception?.Message}\"");
 
@@ -41,36 +41,42 @@ public class SignalREchoClient : ISignalRClient
 
     public Task RegisterClient()
     {
-        Console.WriteLine($"Registering client {_name} ...");
+        LogToConsoleWithTimeStamp($"Registering client {_name} ...");
         return _hubConnection.SendCoreAsync("RegisterClient", new object[] { _name });
     }
 
     public Task ReceiveRegistrationSuccess()
     {
-        Console.WriteLine($"... client {_name} successfully registered.");
+        LogToConsoleWithTimeStamp($"... client {_name} successfully registered.");
         return Task.CompletedTask;
     }
 
-    public Task ReceiveClientMessage(MessageContext messageContext, string message)
+    public async Task ReceiveClientMessage(MessageContext messageContext, string message)
     {
         //TODO awaiting this would make it run synchronously, thus blocking all further SignalR calls from the back-end!
-        //await OnReceiveClientMessage(messageContext, message);
+        await OnReceiveClientMessage(messageContext, message);
 
-        Task.Run(() => OnReceiveClientMessage(messageContext, message));
-        return Task.CompletedTask;
+        //Task.Run(() => OnReceiveClientMessage(messageContext, message));
+        //return Task.FromResult(Task.CompletedTask);
     }
 
     private async Task OnReceiveClientMessage(MessageContext messageContext, string message)
     {
-        Console.WriteLine($"Received message with id {messageContext.MessageId} from {messageContext.Sender}: {message}");
-        await Task.Delay(TimeSpan.FromSeconds(3));
-        await SendMessageAnswer(messageContext.Reverse(), message);
+        LogToConsoleWithTimeStamp($"Received message {messageContext}");
+        var processedMessage = await ProcessMessage(message);
+        await SendMessageAnswer(messageContext.Reverse(), processedMessage);
     }
 
-    public Task SendMessageAnswer(MessageContext messageContext, string message)
+    private static void LogToConsoleWithTimeStamp(string text)
     {
-        Console.WriteLine($"Sending message with id {messageContext.MessageId} to {messageContext.Receiver}: {message}");
-        return _hubConnection.SendCoreAsync("SendMessageToBackEnd", new object[] { messageContext, message });
+        Console.WriteLine($"[{DateTime.Now.ToUniversalTime()}] {text}");
+    }
+
+    public async Task SendMessageAnswer(MessageContext messageContext, string message)
+    {
+        LogToConsoleWithTimeStamp($"Sending message {messageContext}");
+        await _hubConnection.SendCoreAsync("SendMessageToBackEnd", new object[] { messageContext, message });
+        LogToConsoleWithTimeStamp($"Done sending message {messageContext}");
     }
 
     public async Task Disconnect()
@@ -78,5 +84,11 @@ public class SignalREchoClient : ISignalRClient
         await _hubConnection.StopAsync();
         await _hubConnection.DisposeAsync();
         ConnectionClosed?.Invoke();
+    }
+
+    private static async Task<string> ProcessMessage(string message)
+    {
+        await Task.Delay(TimeSpan.FromSeconds(2));
+        return message;
     }
 }

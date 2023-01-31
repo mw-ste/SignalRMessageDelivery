@@ -19,21 +19,13 @@ public class SendMessageRequestedEventHandler : INotificationHandler<SendMessage
         _logger = logger;
     }
 
-    public Task Handle(SendMessageRequestedEvent notification, CancellationToken cancellationToken)
+    public async Task Handle(SendMessageRequestedEvent notification, CancellationToken cancellationToken)
     {
-        //_logger.LogInformation("SendMessageRequestedEvent " +
-                               //$"Sender {notification.Sender} " +
-                               //$"Client {notification.Client} " +
-                               //$"Message {notification.Message} " +
-                               //$"MessageId {notification.MessageId}");
-
-        _signalRGateway.SendMessageToClient(
+        await _signalRGateway.SendMessageToClient(
             new MessageContext(
-                notification.Sender, 
-                notification.Client, 
-                notification.MessageId), 
+                notification.Sender,
+                notification.Client,
+                notification.MessageId),
             notification.Message);
-
-        return Task.CompletedTask;
     }
 }
