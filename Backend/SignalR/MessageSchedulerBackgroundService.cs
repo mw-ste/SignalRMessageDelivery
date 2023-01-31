@@ -9,7 +9,6 @@ public class MessageSchedulerBackgroundService : BackgroundService
     private readonly IHubContext<SignalRHub> _hubContext;
     private readonly IMediator _mediator;
     private readonly ILogger<MessageSchedulerBackgroundService> _logger;
-    private readonly ILogger<PendingMessage> _messageLogger;
 
     private readonly List<PendingMessage> _deadMessages = new List<PendingMessage>();
     public IEnumerable<PendingMessage> DeadMessages => _deadMessages;
@@ -18,14 +17,12 @@ public class MessageSchedulerBackgroundService : BackgroundService
         IPendingMessageDatabase pendingMessageDatabase,
         IHubContext<SignalRHub> hubContext,
         IMediator mediator,
-        ILogger<MessageSchedulerBackgroundService> logger,
-        ILogger<PendingMessage> messageLogger)
+        ILogger<MessageSchedulerBackgroundService> logger)
     {
         _pendingMessageDatabase = pendingMessageDatabase;
         _hubContext = hubContext;
         _mediator = mediator;
         _logger = logger;
-        _messageLogger = messageLogger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -40,7 +37,7 @@ public class MessageSchedulerBackgroundService : BackgroundService
                     continue;
                 }
 
-                if (await pendingMessage.Retry(_hubContext, _mediator, _messageLogger))
+                if (await pendingMessage.Retry(_hubContext, _mediator))
                 {
                     _logger.LogWarning($"Retrying message: {pendingMessage.MessageContext}");
                     await _pendingMessageDatabase.Save(pendingMessage, _mediator);
@@ -61,8 +58,7 @@ public class MessageSchedulerBackgroundService : BackgroundService
         async Task ReviveMessage(PendingMessage pendingMessage)
         {
             _deadMessages.Remove(pendingMessage);
-            pendingMessage.TimeToLive = 3;
-            await pendingMessage.Retry(_hubContext, _mediator, _messageLogger);
+            await pendingMessage.Revive().Send(_hubContext);
             await _pendingMessageDatabase.Save(pendingMessage, _mediator);
         }
 

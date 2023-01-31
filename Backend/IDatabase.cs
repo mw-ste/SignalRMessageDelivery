@@ -7,13 +7,9 @@ namespace Backend;
 public interface IDatabase<T, TId> where T : Aggregate<TId>
 {
     Task<IEnumerable<T>> List();
-
     Task<T> Find(TId id);
-
     Task<T?> TryFind(TId id);
-
     Task Save(T entity, IMediator mediator);
-
     Task Delete(TId id);
 }
 

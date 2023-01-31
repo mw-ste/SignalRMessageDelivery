@@ -17,10 +17,8 @@ public class Sender : Aggregate<string>
         AddEvent(new SendMessageRequestedEvent(Id, client, message, messageId));
     }
 
-    public void ReceiveAnswer(string message, string client, string messageId)
-    {
+    public void ReceiveAnswer(string message, string client, string messageId) => 
         LogMessage(message, messageId, client, Id);
-    }
 
     private void LogMessage(string message, string messageId, string sender, string receiver) =>
         MessageLog.Add($"[{messageId}] {sender} --> {receiver}: {message}");

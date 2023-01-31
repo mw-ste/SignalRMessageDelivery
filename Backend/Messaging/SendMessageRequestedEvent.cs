@@ -9,14 +9,11 @@ public record SendMessageRequestedEvent(string Sender, string Client, string Mes
 public class SendMessageRequestedEventHandler : INotificationHandler<SendMessageRequestedEvent>
 {
     private readonly ISignalRGateway _signalRGateway;
-    private readonly ILogger<SendMessageRequestedEventHandler> _logger;
 
     public SendMessageRequestedEventHandler(
-        ISignalRGateway signalRGateway,
-        ILogger<SendMessageRequestedEventHandler> logger)
+        ISignalRGateway signalRGateway)
     {
         _signalRGateway = signalRGateway;
-        _logger = logger;
     }
 
     public async Task Handle(SendMessageRequestedEvent notification, CancellationToken cancellationToken)

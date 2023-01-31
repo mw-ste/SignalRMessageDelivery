@@ -19,12 +19,7 @@ builder.Services.AddSingleton<IPendingMessageDatabase>(new PendingMessageInMemor
 builder.Services.AddTransient<ISignalRGateway, SignalRGateway>();
 builder.Services.AddTransient<ISignalRDispatcher, SignalRDispatcher>();
 
-builder.Services.AddSingleton(s => new MessageSchedulerBackgroundService(
-    s.GetService<IPendingMessageDatabase>()!,
-    s.GetService<IHubContext<SignalRHub>>()!,
-    s.GetService<IMediator>()!,
-    s.GetService<ILogger<MessageSchedulerBackgroundService>>()!,
-    s.GetService<ILogger<PendingMessage>>()!));
+builder.Services.AddSingleton<MessageSchedulerBackgroundService>();
 
 //adding local SignalR
 builder.Services.AddSignalR(hubOptions =>

@@ -14,7 +14,7 @@ public class PendingMessage : Aggregate<string>
     public MessageContext MessageContext { get; set; }
     public object[] Arguments { get; set; }
 
-    public int TimeToLive { get; set; } = 3;
+    public int TimeToLive { get; set; }
     public DateTime SendTimestamp { get; set; }
     public TimeSpan RetryDelay { get; set; } = TimeSpan.FromSeconds(5);
 
@@ -35,29 +35,21 @@ public class PendingMessage : Aggregate<string>
         Method = method;
         MessageContext = context;
         Arguments = arguments;
+        TimeToLive = 3;
     }
 
-    public Task Send(IHubContext<SignalRHub> hubContext, ILogger<PendingMessage> logger)
+    public Task Send(IHubContext<SignalRHub> hubContext)
     {
         TimeToLive -= 1;
         SendTimestamp = DateTime.Now.ToUniversalTime();
 
-        return SendInternal(hubContext.Clients.Groups(MessageContext.Receiver), logger);
+        return SendInternal(hubContext.Clients.Groups(MessageContext.Receiver));
     }
 
-    private static void LogInformationWithTimeStamp(string text, ILogger<PendingMessage> logger)
-    {
-        logger.LogInformation($"[{DateTime.Now.ToUniversalTime()}] {text}");
-    }
+    private Task SendInternal(IClientProxy clientProxy) => 
+        clientProxy.SendCoreAsync(Method, Arguments.Prepend(MessageContext).ToArray());
 
-    private async Task SendInternal(IClientProxy clientProxy, ILogger<PendingMessage> logger)
-    {
-        LogInformationWithTimeStamp($"starting SendCoreAsync for {MessageContext}", logger);
-        await clientProxy.SendCoreAsync(Method, Arguments.Prepend(MessageContext).ToArray());
-        LogInformationWithTimeStamp($"finished SendCoreAsync for {MessageContext}", logger);
-    }
-
-    public async Task<bool> Retry(IHubContext<SignalRHub> hubContext, IMediator mediator, ILogger<PendingMessage> logger)
+    public async Task<bool> Retry(IHubContext<SignalRHub> hubContext, IMediator mediator)
     {
         if (Failed)
         {
@@ -65,7 +57,13 @@ public class PendingMessage : Aggregate<string>
             return false;
         }
 
-        await Send(hubContext, logger);
+        await Send(hubContext);
         return true;
+    }
+
+    public PendingMessage Revive()
+    {
+        TimeToLive = 3;
+        return this;
     }
 }

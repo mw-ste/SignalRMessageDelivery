@@ -42,7 +42,10 @@ public class SignalREchoClient : ISignalRClient
     public Task RegisterClient()
     {
         LogToConsoleWithTimeStamp($"Registering client {_name} ...");
-        return _hubConnection.SendCoreAsync("RegisterClient", new object[] { _name });
+        
+        return _hubConnection.SendCoreAsync(
+            nameof(ISignalRHub.RegisterClient), 
+            new object[] { _name });
     }
 
     public Task ReceiveRegistrationSuccess()
@@ -51,32 +54,28 @@ public class SignalREchoClient : ISignalRClient
         return Task.CompletedTask;
     }
 
-    public async Task ReceiveClientMessage(MessageContext messageContext, string message)
+    public Task ReceiveClientMessage(MessageContext messageContext, string message)
     {
         //TODO awaiting this would make it run synchronously, thus blocking all further SignalR calls from the back-end!
-        await OnReceiveClientMessage(messageContext, message);
+        //await OnReceiveClientMessage(messageContext, message);
 
-        //Task.Run(() => OnReceiveClientMessage(messageContext, message));
-        //return Task.FromResult(Task.CompletedTask);
+        Task.Run(() => ProcessMessage(messageContext, message));
+        return Task.FromResult(Task.CompletedTask);
     }
 
-    private async Task OnReceiveClientMessage(MessageContext messageContext, string message)
+    private async Task ProcessMessage(MessageContext messageContext, string message)
     {
         LogToConsoleWithTimeStamp($"Received message {messageContext}");
-        var processedMessage = await ProcessMessage(message);
-        await SendMessageAnswer(messageContext.Reverse(), processedMessage);
-    }
-
-    private static void LogToConsoleWithTimeStamp(string text)
-    {
-        Console.WriteLine($"[{DateTime.Now.ToUniversalTime()}] {text}");
+        await Task.Delay(TimeSpan.FromSeconds(2));
+        await SendMessageAnswer(messageContext.Reverse(), message);
     }
 
     public async Task SendMessageAnswer(MessageContext messageContext, string message)
     {
         LogToConsoleWithTimeStamp($"Sending message {messageContext}");
-        await _hubConnection.SendCoreAsync("SendMessageToBackEnd", new object[] { messageContext, message });
-        LogToConsoleWithTimeStamp($"Done sending message {messageContext}");
+        await _hubConnection.SendCoreAsync(
+            nameof(ISignalRHub.SendMessageToBackEnd), 
+            new object[] { messageContext, message });
     }
 
     public async Task Disconnect()
@@ -86,9 +85,8 @@ public class SignalREchoClient : ISignalRClient
         ConnectionClosed?.Invoke();
     }
 
-    private static async Task<string> ProcessMessage(string message)
+    private static void LogToConsoleWithTimeStamp(string text)
     {
-        await Task.Delay(TimeSpan.FromSeconds(2));
-        return message;
+        Console.WriteLine($"[{DateTime.Now.ToUniversalTime()}] {text}");
     }
 }
