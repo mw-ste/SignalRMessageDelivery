@@ -51,7 +51,16 @@ public class SignalREchoClient : ISignalRClient
         return Task.CompletedTask;
     }
 
-    public async Task ReceiveClientMessage(MessageContext messageContext, string message)
+    public Task ReceiveClientMessage(MessageContext messageContext, string message)
+    {
+        //TODO awaiting this would make it run synchronously, thus blocking all further SignalR calls from the back-end!
+        //await OnReceiveClientMessage(messageContext, message);
+
+        Task.Run(() => OnReceiveClientMessage(messageContext, message));
+        return Task.CompletedTask;
+    }
+
+    private async Task OnReceiveClientMessage(MessageContext messageContext, string message)
     {
         Console.WriteLine($"Received message with id {messageContext.MessageId} from {messageContext.Sender}: {message}");
         await Task.Delay(TimeSpan.FromSeconds(3));
