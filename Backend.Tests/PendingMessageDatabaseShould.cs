@@ -1,7 +1,5 @@
 using Backend.Aggregates;
 using Backend.Database;
-using MediatR;
-using NSubstitute;
 using Shared;
 using Xunit;
 
@@ -13,7 +11,7 @@ public class PendingMessageDatabaseShould
 
     public PendingMessageDatabaseShould()
     {
-        _sut = new PendingMessageInMemoryDatabase(Substitute.For<IMediator>());
+        _sut = new PendingMessageInMemoryDatabase();
     }
 
     private const string MessageId = "messageId";
@@ -30,7 +28,7 @@ public class PendingMessageDatabaseShould
         };
 
         await _sut.Save(pendingMessage);
-        var result = await _sut.Find(MessageId);
+        var result = await _sut.TryFind(MessageId);
 
         Assert.NotNull(result);
         Assert.Equal(MessageId, result.Id);

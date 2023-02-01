@@ -7,14 +7,14 @@ public record CheckPendingMessageState(string MessageId);
 
 public class CheckPendingMessageStateConsumer : IConsumer<CheckPendingMessageState>
 {
-    private readonly IPendingMessageDatabase _messageDatabase;
+    private readonly IPendingMessageRepository _messageRepository;
     private readonly ILogger<CheckPendingMessageStateConsumer> _logger;
 
     public CheckPendingMessageStateConsumer(
-        IPendingMessageDatabase messageDatabase,
+        IPendingMessageRepository messageRepository,
         ILogger<CheckPendingMessageStateConsumer> logger)
     {
-        _messageDatabase = messageDatabase;
+        _messageRepository = messageRepository;
         _logger = logger;
     }
 
@@ -25,7 +25,7 @@ public class CheckPendingMessageStateConsumer : IConsumer<CheckPendingMessageSta
     {
         LogWithTimestamp($"Retrying message {context.Message.MessageId}", LogLevel.Information);
         var messageId = context.Message.MessageId;
-        var message = await _messageDatabase.TryFind(messageId);
+        var message = await _messageRepository.TryFind(messageId);
         if (message == null)
         {
             LogWithTimestamp($"Message {context.Message.MessageId} already finished", LogLevel.Information);
@@ -40,6 +40,6 @@ public class CheckPendingMessageStateConsumer : IConsumer<CheckPendingMessageSta
             return;
         }
 
-        await _messageDatabase.Save(message);
+        await _messageRepository.Save(message);
     }
 }

@@ -9,12 +9,12 @@ public record MessageCreatedEvent(string Sender, string Client, string Message, 
 
 public class MessageCreatedEventHandler : INotificationHandler<MessageCreatedEvent>
 {
-    private readonly IPendingMessageDatabase _messageDatabase;
+    private readonly IPendingMessageRepository _messageRepository;
 
     public MessageCreatedEventHandler(
-        IPendingMessageDatabase messageDatabase)
+        IPendingMessageRepository messageRepository)
     {
-        _messageDatabase = messageDatabase;
+        _messageRepository = messageRepository;
     }
 
     public async Task Handle(MessageCreatedEvent notification, CancellationToken cancellationToken)
@@ -25,6 +25,6 @@ public class MessageCreatedEventHandler : INotificationHandler<MessageCreatedEve
 
         message.Send();
 
-        await _messageDatabase.Save(message);
+        await _messageRepository.Save(message);
     }
 }

@@ -7,17 +7,17 @@ public record MessageAnswerReceivedEvent(string Sender, string Client, string Me
 
 public class MessageAnswerReceivedEventHandler : INotificationHandler<MessageAnswerReceivedEvent>
 {
-    private readonly ISenderDatabase _senderDatabase;
+    private readonly ISenderRepository _senderRepository;
 
-    public MessageAnswerReceivedEventHandler(ISenderDatabase senderDatabase)
+    public MessageAnswerReceivedEventHandler(ISenderRepository senderRepository)
     {
-        _senderDatabase = senderDatabase;
+        _senderRepository = senderRepository;
     }
 
     public async Task Handle(MessageAnswerReceivedEvent notification, CancellationToken cancellationToken)
     {
-        var sender = await _senderDatabase.Find(notification.Sender);
+        var sender = await _senderRepository.Find(notification.Sender);
         sender.ReceiveAnswer(notification.Message, notification.Client, notification.MessageId);
-        await _senderDatabase.Save(sender);
+        await _senderRepository.Save(sender);
     }
 }

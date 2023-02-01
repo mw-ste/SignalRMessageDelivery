@@ -16,8 +16,11 @@ builder.Services.AddControllers();
 builder.Services.AddSingleton<ISenderDatabase, SenderInMemoryDatabase>();
 builder.Services.AddSingleton<IPendingMessageDatabase, PendingMessageInMemoryDatabase>();
 
-builder.Services.AddTransient<ISignalRGateway, SignalRGateway>();
-builder.Services.AddTransient<ISignalRDispatcher, SignalRDispatcher>();
+builder.Services.AddScoped<IPendingMessageRepository, PendingMessageRepository>();
+builder.Services.AddScoped<ISenderRepository, SenderRepository>();
+
+builder.Services.AddScoped<ISignalRGateway, SignalRGateway>();
+builder.Services.AddScoped<ISignalRDispatcher, SignalRDispatcher>();
 
 //adding local SignalR
 builder.Services.AddSignalR(hubOptions =>

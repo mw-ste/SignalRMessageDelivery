@@ -7,18 +7,18 @@ public record SendMessageCommand(string Sender, string Client, string Message) :
 
 public class SendMessageCommandHandler : IRequestHandler<SendMessageCommand>
 {
-    private readonly ISenderDatabase _database;
+    private readonly ISenderRepository _repository;
 
-    public SendMessageCommandHandler(ISenderDatabase database)
+    public SendMessageCommandHandler(ISenderRepository repository)
     {
-        _database = database;
+        _repository = repository;
     }
 
     public async Task<Unit> Handle(SendMessageCommand request, CancellationToken cancellationToken)
     {
-        var sender = await _database.Find(request.Sender);
+        var sender = await _repository.Find(request.Sender);
         sender.SendMessage(request.Message, request.Client);
-        await _database.Save(sender);
+        await _repository.Save(sender);
         return Unit.Value;
     }
 }
