@@ -1,6 +1,6 @@
 ﻿using Backend.Messaging;
 
-namespace Backend;
+namespace Backend.Aggregates;
 
 public class Sender : Aggregate<string>
 {
@@ -14,7 +14,7 @@ public class Sender : Aggregate<string>
     {
         var messageId = Guid.NewGuid().ToString();
         LogMessage(message, messageId, Id, client);
-        AddEvent(new SendMessageRequestedEvent(Id, client, message, messageId));
+        AddEvent(new MessageCreatedEvent(Id, client, message, messageId));
     }
 
     public void ReceiveAnswer(string message, string client, string messageId) => 
@@ -22,4 +22,5 @@ public class Sender : Aggregate<string>
 
     private void LogMessage(string message, string messageId, string sender, string receiver) =>
         MessageLog.Add($"[{messageId}] {sender} --> {receiver}: {message}");
+
 }

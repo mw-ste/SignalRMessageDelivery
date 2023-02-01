@@ -1,6 +1,6 @@
 ﻿using MediatR;
 
-namespace Backend;
+namespace Backend.Aggregates;
 
 public abstract class Aggregate<TId>
 {
@@ -11,7 +11,7 @@ public abstract class Aggregate<TId>
         Id = id;
     }
 
-    public TId Id { get; set; }
+    public TId Id { get; init; }
 
     public void AddEvent(INotification notification) => _events.Add(notification);
 

@@ -1,4 +1,5 @@
-﻿using Backend.Messaging;
+﻿using Backend.Database;
+using Backend.Messaging;
 using MediatR;
 using Shared;
 

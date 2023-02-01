@@ -1,3 +1,5 @@
+using Backend.Aggregates;
+using Backend.Database;
 using MediatR;
 using NSubstitute;
 using Xunit;
@@ -10,7 +12,7 @@ public class SenderDatabaseShould
 
     public SenderDatabaseShould()
     {
-        _sut = new SenderInMemoryDatabase();
+        _sut = new SenderInMemoryDatabase(Substitute.For<IMediator>());
     }
 
     private const string SenderId = "senderId";
@@ -22,7 +24,7 @@ public class SenderDatabaseShould
         sender.SendMessage("Message", "Client");
         sender.ReceiveAnswer("Answer", "Client", "MessageId");
 
-        await _sut.Save(sender, Substitute.For<IMediator>());
+        await _sut.Save(sender);
         var result = await _sut.Find(SenderId);
 
         Assert.NotNull(result);

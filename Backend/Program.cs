@@ -1,8 +1,8 @@
-using Backend;
+using Backend.Database;
 using Backend.SignalR;
+using MassTransit;
 using MediatR;
 using System.Reflection;
-using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,34 +13,30 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
-builder.Services.AddSingleton<ISenderDatabase>(new SenderInMemoryDatabase());
-builder.Services.AddSingleton<IPendingMessageDatabase>(new PendingMessageInMemoryDatabase());
+builder.Services.AddSingleton<ISenderDatabase, SenderInMemoryDatabase>();
+builder.Services.AddSingleton<IPendingMessageDatabase, PendingMessageInMemoryDatabase>();
 
 builder.Services.AddTransient<ISignalRGateway, SignalRGateway>();
 builder.Services.AddTransient<ISignalRDispatcher, SignalRDispatcher>();
-
-builder.Services.AddSingleton<MessageSchedulerBackgroundService>();
 
 //adding local SignalR
 builder.Services.AddSignalR(hubOptions =>
     hubOptions.MaximumParallelInvocationsPerClient = 5);
 
-//adding MediatR
-builder.Services.AddMediatR(Assembly.GetExecutingAssembly());
-
 builder.Services.AddMassTransit(x =>
 {
-    var assembly = Assembly.GetEntryAssembly();
-    x.AddConsumers(assembly);
+    x.AddDelayedMessageScheduler();
+    x.AddConsumers(Assembly.GetExecutingAssembly());
 
     x.UsingInMemory((ctx, cfg) =>
     {
+        cfg.UseDelayedMessageScheduler();
         cfg.ConfigureEndpoints(ctx);
     });
 });
 
-//background service to periodically check for messages without answer
-builder.Services.AddHostedService(s => s.GetService<MessageSchedulerBackgroundService>()!);
+//adding MediatR
+builder.Services.AddMediatR(Assembly.GetExecutingAssembly());
 
 var app = builder.Build();
 

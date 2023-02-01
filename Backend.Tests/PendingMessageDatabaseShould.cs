@@ -1,3 +1,5 @@
+using Backend.Aggregates;
+using Backend.Database;
 using MediatR;
 using NSubstitute;
 using Shared;
@@ -11,7 +13,7 @@ public class PendingMessageDatabaseShould
 
     public PendingMessageDatabaseShould()
     {
-        _sut = new PendingMessageInMemoryDatabase();
+        _sut = new PendingMessageInMemoryDatabase(Substitute.For<IMediator>());
     }
 
     private const string MessageId = "messageId";
@@ -20,25 +22,20 @@ public class PendingMessageDatabaseShould
     public async Task SerializeAndDeserialize()
     {
         var pendingMessage = new PendingMessage(
-            "Method",
-            new MessageContext("Sender", "Receiver", MessageId),
-            "Argument1",
-            "Argument2")
+            "Message",
+            new MessageContext("Sender", "Receiver", MessageId))
         {
             RetryDelay = TimeSpan.FromSeconds(1),
             TimeToLive = 42
         };
 
-        await _sut.Save(pendingMessage, Substitute.For<IMediator>());
+        await _sut.Save(pendingMessage);
         var result = await _sut.Find(MessageId);
 
         Assert.NotNull(result);
         Assert.Equal(MessageId, result.Id);
-        Assert.Equal("Method", result.Method);
+        Assert.Equal("Message", result.Message);
         Assert.Equal(TimeSpan.FromSeconds(1), result.RetryDelay);
         Assert.Equal(42, result.TimeToLive);
-        Assert.Equal(2, result.Arguments.Length);
-        Assert.Equal("Argument1", result.Arguments.First());
-        Assert.Equal("Argument2", result.Arguments.Last());
     }
 }

@@ -1,15 +1,16 @@
-﻿using MediatR;
+﻿using Backend.Aggregates;
+using MediatR;
 using Newtonsoft.Json;
 using System.Collections.Concurrent;
 
-namespace Backend;
+namespace Backend.Database;
 
 public interface IDatabase<T, TId> where T : Aggregate<TId>
 {
     Task<IEnumerable<T>> List();
     Task<T> Find(TId id);
     Task<T?> TryFind(TId id);
-    Task Save(T entity, IMediator mediator);
+    Task Save(T entity);
     Task Delete(TId id);
 }
 
@@ -17,6 +18,13 @@ public abstract class InMemoryDatabase<T, TId> : IDatabase<T, TId>
     where T : Aggregate<TId>
     where TId : notnull
 {
+    private readonly IMediator _mediator;
+
+    protected InMemoryDatabase(IMediator mediator)
+    {
+        _mediator = mediator;
+    }
+
     private readonly ConcurrentDictionary<TId, string> _database =
         new ConcurrentDictionary<TId, string>();
 
@@ -46,10 +54,10 @@ public abstract class InMemoryDatabase<T, TId> : IDatabase<T, TId>
             : null;
     }
 
-    public Task Save(T entity, IMediator mediator)
+    public Task Save(T entity)
     {
         _database[entity.Id]= JsonConvert.SerializeObject(entity);
-        return entity.SendEvents(mediator);
+        return entity.SendEvents(_mediator);
     }
 
     public Task Delete(TId id)

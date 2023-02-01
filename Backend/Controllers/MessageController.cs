@@ -1,11 +1,11 @@
-﻿using Backend.Messaging;
-using Backend.SignalR;
+﻿using Backend.Aggregates;
+using Backend.Database;
+using Backend.Messaging;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using MassTransit;
 
-namespace Backend;
+namespace Backend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -14,21 +14,30 @@ public class MessageController : ControllerBase
     private readonly ISenderDatabase _senderDatabase;
     private readonly IPendingMessageDatabase _pendingMessageDatabase;
     private readonly IMediator _mediator;
-    private readonly MessageSchedulerBackgroundService _messageScheduler;
-    private readonly IBus _bus;
 
     public MessageController(
         ISenderDatabase senderDatabase,
         IPendingMessageDatabase pendingMessageDatabase,
-        IMediator mediator,
-        MessageSchedulerBackgroundService messageScheduler,
-        IBus bus)
+        IMediator mediator)
     {
         _senderDatabase = senderDatabase;
         _pendingMessageDatabase = pendingMessageDatabase;
         _mediator = mediator;
-        _messageScheduler = messageScheduler;
-        _bus = bus;
+    }
+
+    [HttpPost(nameof(Test))]
+    public async Task<ActionResult> Test()
+    {
+        await _senderDatabase.Save(new Sender("peter"));
+        await _mediator.Send(new SendMessageCommand("peter", "horst", "test"));
+        return Ok();
+    }
+
+    [HttpPost(nameof(AddSender))]
+    public async Task<ActionResult> AddSender([Required] string senderId)
+    {
+        await _senderDatabase.Save(new Sender(senderId));
+        return Ok();
     }
 
     [HttpPost(nameof(SendMessageToClient))]
@@ -38,14 +47,6 @@ public class MessageController : ControllerBase
         [Required] string message)
     {
         await _mediator.Send(new SendMessageCommand(sender, client, message));
-        return Ok();
-    }
-
-    [HttpPost(nameof(AddSender))]
-    public async Task<ActionResult> AddSender([Required] string senderId)
-    {
-        await _bus.Publish(new MassTransitMessageEvent($"New sender: {senderId}"));
-        await _senderDatabase.Save(new Sender(senderId), _mediator);
         return Ok();
     }
 
@@ -67,20 +68,26 @@ public class MessageController : ControllerBase
     public async Task<ActionResult<PendingMessage[]>> ListPendingMessages()
     {
         var messages = await _pendingMessageDatabase.List();
-        return Ok(messages.ToArray());
+        return Ok(messages.Where(m => m.Retryable).ToArray());
     }
 
     [HttpGet(nameof(ListFailedMessages))]
-    public ActionResult<PendingMessage[]> ListFailedMessages()
+    public async Task<ActionResult<PendingMessage[]>> ListFailedMessages()
     {
-        var messages = _messageScheduler.DeadMessages;
-        return Ok(messages.ToArray());
+        var messages = await _pendingMessageDatabase.List();
+        return Ok(messages.Where(m => !m.Retryable).ToArray());
     }
 
     [HttpPost(nameof(RetryFailedMessages))]
     public async Task<ActionResult> RetryFailedMessages()
     {
-        await _messageScheduler.ReviveDeadMessages();
+        var messages = await _pendingMessageDatabase.List();
+        foreach (var message in messages)
+        {
+            message.Revive().Send();
+            await _pendingMessageDatabase.Save(message);
+        }
+
         return Ok();
     }
 }
