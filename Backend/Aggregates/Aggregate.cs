@@ -4,6 +4,7 @@ namespace Backend.Aggregates;
 
 public abstract class Aggregate<TId>
 {
+    public Guid DatabaseTag { get; set; }
     private readonly List<INotification> _events = new List<INotification>();
 
     protected Aggregate(TId id)
@@ -15,12 +16,10 @@ public abstract class Aggregate<TId>
 
     public void AddEvent(INotification notification) => _events.Add(notification);
 
-    public async Task SendEvents(IMediator mediator)
+    public IEnumerable<INotification> ClearEvents()
     {
-        foreach (var notification in _events)
-        {
-            await mediator.Publish(notification);
-        }
+        var events = _events.ToList();
         _events.Clear();
+        return events;
     }
 }

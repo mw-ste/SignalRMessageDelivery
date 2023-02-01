@@ -35,7 +35,7 @@ public class SignalREchoClient : ISignalRClient
 
     private void SubscribeToHub()
     {
-        _hubConnection.On<MessageContext, string>(nameof(ReceiveClientMessage), ReceiveClientMessage);
+        _hubConnection.On<SignalRMessageContext, string>(nameof(ReceiveClientMessage), ReceiveClientMessage);
         _hubConnection.On(nameof(ReceiveRegistrationSuccess), ReceiveRegistrationSuccess);
     }
 
@@ -54,27 +54,27 @@ public class SignalREchoClient : ISignalRClient
         return Task.CompletedTask;
     }
 
-    public Task ReceiveClientMessage(MessageContext messageContext, string message)
+    public Task ReceiveClientMessage(SignalRMessageContext messageContext, string message)
     {
-        //TODO awaiting this would make it run synchronously, thus blocking all further SignalR calls from the back-end!
+        //TODO awaiting this would make it run synchronously, thus blocking all further calls from SignalR
         //await OnReceiveClientMessage(messageContext, message);
 
         Task.Run(() => ProcessMessage(messageContext, message));
         return Task.FromResult(Task.CompletedTask);
     }
 
-    private async Task ProcessMessage(MessageContext messageContext, string message)
+    private async Task ProcessMessage(SignalRMessageContext messageContext, string message)
     {
         LogToConsoleWithTimeStamp($"Received message {messageContext}");
-        await Task.Delay(TimeSpan.FromSeconds(2));
+        await Task.Delay(RandomDelay.DelayInSeconds(2, 2));
         await SendMessageAnswer(messageContext.Reverse(), message);
     }
 
-    public async Task SendMessageAnswer(MessageContext messageContext, string message)
+    public async Task SendMessageAnswer(SignalRMessageContext messageContext, string message)
     {
         LogToConsoleWithTimeStamp($"Sending message {messageContext}");
         await _hubConnection.SendCoreAsync(
-            nameof(ISignalRHub.SendMessageToBackEnd), 
+            nameof(ISignalRHub.SendAnswerToBackEnd), 
             new object[] { messageContext, message });
     }
 

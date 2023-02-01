@@ -2,6 +2,6 @@
 
 public interface ISignalRHub
 {
-    Task SendMessageToBackEnd(MessageContext messageContext, string message);
+    Task SendAnswerToBackEnd(SignalRMessageContext messageContext, string answer);
     Task RegisterClient(string clientId);
 }

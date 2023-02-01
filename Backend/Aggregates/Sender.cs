@@ -1,4 +1,5 @@
 ﻿using Backend.Messaging;
+using Shared;
 
 namespace Backend.Aggregates;
 
@@ -13,14 +14,14 @@ public class Sender : Aggregate<string>
     public void SendMessage(string message, string client)
     {
         var messageId = Guid.NewGuid().ToString();
-        LogMessage(message, messageId, Id, client);
-        AddEvent(new MessageCreatedEvent(Id, client, message, messageId));
+        var messageContext = new MessageContext(Id, client, messageId);
+        LogMessage(messageContext, message);
+        AddEvent(new MessageSentEvent(messageContext, message));
     }
 
-    public void ReceiveAnswer(string message, string client, string messageId) => 
-        LogMessage(message, messageId, client, Id);
+    public void ReceiveAnswer(MessageContext messageContext, string answer) => 
+        LogMessage(messageContext, answer);
 
-    private void LogMessage(string message, string messageId, string sender, string receiver) =>
-        MessageLog.Add($"[{messageId}] {sender} --> {receiver}: {message}");
-
+    private void LogMessage(MessageContext messageContext, string message) => 
+        MessageLog.Add($"{messageContext}: {message}");
 }

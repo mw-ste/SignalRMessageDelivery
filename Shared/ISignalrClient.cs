@@ -2,6 +2,6 @@
 
 public interface ISignalRClient
 {
-    Task ReceiveClientMessage(MessageContext messageContext, string message);
+    Task ReceiveClientMessage(SignalRMessageContext messageContext, string message);
     Task ReceiveRegistrationSuccess();
 }

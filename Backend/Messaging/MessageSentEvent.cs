@@ -1,8 +1,7 @@
-﻿using Backend.MassTransit;
-using Backend.SignalR;
-using MassTransit;
+﻿using Backend.Aggregates;
+using Backend.Database;
 using MediatR;
-using MessageContext = Shared.MessageContext;
+using Shared;
 
 namespace Backend.Messaging;
 
@@ -10,24 +9,22 @@ public record MessageSentEvent(MessageContext MessageContext, string Message) : 
 
 public class MessageSentEventHandler : INotificationHandler<MessageSentEvent>
 {
-    private readonly ISignalRGateway _signalRGateway;
-    private readonly IMessageScheduler _messageScheduler;
+    private readonly IPendingMessageRepository _messageRepository;
 
     public MessageSentEventHandler(
-        ISignalRGateway signalRGateway,
-        IMessageScheduler messageScheduler)
+        IPendingMessageRepository messageRepository)
     {
-        _signalRGateway = signalRGateway;
-        _messageScheduler = messageScheduler;
+        _messageRepository = messageRepository;
     }
 
     public async Task Handle(MessageSentEvent notification, CancellationToken cancellationToken)
     {
-        await _signalRGateway.SendMessageToClient(notification.MessageContext, notification.Message);
+        var message = new PendingMessage(
+            notification.MessageContext,
+            notification.Message);
 
-        await _messageScheduler.SchedulePublish(
-            DateTime.UtcNow + TimeSpan.FromSeconds(5),
-            new CheckPendingMessageState(notification.MessageContext.MessageId),
-            cancellationToken);
+        message.Send();
+
+        await _messageRepository.Save(message);
     }
 }

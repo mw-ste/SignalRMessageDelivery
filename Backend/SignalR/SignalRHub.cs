@@ -16,11 +16,10 @@ public class SignalRHub : Hub<ISignalRClient>, ISignalRHub
         _logger = logger;
     }
 
-    public async Task SendMessageToBackEnd(MessageContext messageContext, string message)
+    public async Task SendAnswerToBackEnd(SignalRMessageContext messageContext, string answer)
     {
         _logger.LogInformation($"Received message answer: {messageContext}");
-        await Task.Delay(TimeSpan.FromSeconds(2));
-        await _signalRDispatcher.PublishClientMessageAnswer(messageContext, message);
+        await _signalRDispatcher.PublishClientMessageAnswer(messageContext, answer);
     }
 
     public async Task RegisterClient(string clientId)

@@ -20,8 +20,8 @@ public class PendingMessageDatabaseShould
     public async Task SerializeAndDeserialize()
     {
         var pendingMessage = new PendingMessage(
-            "Message",
-            new MessageContext("Sender", "Receiver", MessageId))
+            new MessageContext("Sender", "Receiver", MessageId),
+            "Message")
         {
             RetryDelay = TimeSpan.FromSeconds(1),
             TimeToLive = 42
@@ -31,7 +31,7 @@ public class PendingMessageDatabaseShould
         var result = await _sut.TryFind(MessageId);
 
         Assert.NotNull(result);
-        Assert.Equal(MessageId, result.Id);
+        Assert.Equal(MessageId, result!.Id);
         Assert.Equal("Message", result.Message);
         Assert.Equal(TimeSpan.FromSeconds(1), result.RetryDelay);
         Assert.Equal(42, result.TimeToLive);

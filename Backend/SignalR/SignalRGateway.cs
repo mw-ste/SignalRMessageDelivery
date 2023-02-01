@@ -5,7 +5,7 @@ namespace Backend.SignalR;
 
 public interface ISignalRGateway
 {
-    Task SendMessageToClient(MessageContext messageContext, string message);
+    Task SendMessageToClient(SignalRMessageContext messageContext, string message);
 }
 
 public class SignalRGateway : ISignalRGateway
@@ -17,11 +17,11 @@ public class SignalRGateway : ISignalRGateway
         _hubContext = hubContext;
     }
 
-    public async Task SendMessageToClient(MessageContext messageContext, string message)
+    public async Task SendMessageToClient(SignalRMessageContext messageContext, string message)
     {
         await _hubContext
             .Clients
-            .Group(messageContext.Receiver)
+            .Group(messageContext.MessageContext.Receiver)
             .SendCoreAsync(
                 nameof(ISignalRClient.ReceiveClientMessage),
                 new object[]{ messageContext, message});

@@ -17,6 +17,9 @@ public abstract class InMemoryDatabase<T, TId> : IDatabase<T, TId> where T : Agg
     private readonly ConcurrentDictionary<TId, string> _database =
         new ConcurrentDictionary<TId, string>();
 
+    private readonly ConcurrentDictionary<TId, Guid> _tags =
+        new ConcurrentDictionary<TId, Guid>();
+
     public Task<IEnumerable<T>> List() =>
         Task.FromResult(_database.Select(kvp => TryFindInternal(kvp.Key)!));
 
@@ -28,20 +31,43 @@ public abstract class InMemoryDatabase<T, TId> : IDatabase<T, TId> where T : Agg
 
     private T? TryFindInternal(TId id)
     {
-        return _database.TryGetValue(id, out var value)
-            ? JsonConvert.DeserializeObject<T?>(value)
-            : null;
+        if (!_database.TryGetValue(id, out var value))
+        {
+            return null;
+        }
+
+        var aggregate = JsonConvert.DeserializeObject<T?>(value);
+
+
+        if (aggregate == null)
+        {
+            return null;
+        }
+
+        var tag = Guid.NewGuid();
+        aggregate.DatabaseTag = tag;
+        _tags[id] = tag;
+        return aggregate;
+
     }
 
     public Task Save(T entity)
     {
-        _database[entity.Id] = JsonConvert.SerializeObject(entity);
+        var entityId = entity.Id;
+
+        if (_tags.ContainsKey(entityId) && entity.DatabaseTag != _tags[entityId])
+        {
+            throw new DatabaseTagMismatchException();
+        }
+
+        _database[entityId] = JsonConvert.SerializeObject(entity);
         return Task.CompletedTask;
     }
 
     public Task Delete(TId id)
     {
         _database.Remove(id, out _);
+        _tags.Remove(id, out _);
         return Task.CompletedTask;
     }
 }

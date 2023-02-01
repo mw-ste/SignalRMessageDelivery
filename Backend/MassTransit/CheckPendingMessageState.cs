@@ -34,10 +34,9 @@ public class CheckPendingMessageStateConsumer : IConsumer<CheckPendingMessageSta
 
         message.Send();
 
-        if (message.Retryable)
+        if (!message.Retryable)
         {
             LogWithTimestamp($"Message {context.Message.MessageId} is being retried the last time now", LogLevel.Warning);
-            return;
         }
 
         await _messageRepository.Save(message);

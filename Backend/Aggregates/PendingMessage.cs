@@ -1,4 +1,5 @@
 ﻿using Backend.Messaging;
+using MediatR;
 using Newtonsoft.Json;
 using Shared;
 
@@ -13,7 +14,7 @@ public class PendingMessage : Aggregate<string>
 
     public int TimeToLive { get; set; }
     public DateTime SendTimestamp { get; set; }
-    public TimeSpan RetryDelay { get; set; } = TimeSpan.FromSeconds(5);
+    public TimeSpan RetryDelay { get; set; } = TimeSpan.FromSeconds(3);
 
     #region json constructor
 
@@ -28,13 +29,13 @@ public class PendingMessage : Aggregate<string>
     #endregion
 
     public PendingMessage(
-        string message,
-        MessageContext context) 
-        : base(context.MessageId)
+        MessageContext messageContext,
+        string message) 
+        : base(messageContext.MessageId)
     {
         Message = message;
-        MessageContext = context;
-        TimeToLive = 3;
+        MessageContext = messageContext;
+        TimeToLive = 5;
     }
 
     public void Send()
@@ -48,7 +49,18 @@ public class PendingMessage : Aggregate<string>
         TimeToLive -= 1;
         SendTimestamp = DateTime.UtcNow;
 
-        AddEvent(new MessageSentEvent(MessageContext, Message));
+        AddEvent(new MessageSentToSignalREvent(new SignalRMessageContext(MessageContext, SendTimestamp), Message));
+    }
+
+    public void HandleAnswer(SignalRMessageContext messageContext, string answer)
+    {
+        if (messageContext.MessageContext.MessageId != Id ||
+            messageContext.Timestamp != SendTimestamp)
+        {
+            return;
+        }
+
+        AddEvent(new AnswerReceivedEvent(messageContext.MessageContext, answer));
     }
 
     public PendingMessage Revive()

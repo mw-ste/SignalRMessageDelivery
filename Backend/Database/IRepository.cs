@@ -1,5 +1,6 @@
 ﻿using Backend.Aggregates;
 using MediatR;
+using IMediator = MediatR.IMediator;
 
 namespace Backend.Database;
 
@@ -18,13 +19,16 @@ public abstract class Repository<T, TId> : IRepository<T, TId>
 {
     private readonly IDatabase<T, TId> _database;
     private readonly IMediator _mediator;
+    private readonly ILogger<Repository<T, TId>> _logger;
 
     protected Repository(
         IDatabase<T, TId> database,
-        IMediator mediator)
+        IMediator mediator,
+        ILogger<Repository<T, TId>> logger)
     {
         _database = database;
         _mediator = mediator;
+        _logger = logger;
     }
 
     public Task<IEnumerable<T>> List() =>
@@ -45,8 +49,37 @@ public abstract class Repository<T, TId> : IRepository<T, TId>
     
     public Task Save(T entity)
     {
+        var events = entity.ClearEvents();
         _database.Save(entity);
-        return entity.SendEvents(_mediator);
+        return SendEvents(events);
+    }
+
+    private Task SendEvents(IEnumerable<INotification> events)
+    {
+        var tasks = events.Select(SendEvent).ToArray();
+        return Task.WhenAll(tasks);
+    }
+
+    private async Task SendEvent(INotification notification)
+    {
+        var timeToLive = 3;
+
+        while (true)
+        {
+            try
+            {
+                await _mediator.Publish(notification);
+                return;
+            }
+            catch(DatabaseTagMismatchException)
+            {
+                _logger.LogWarning($"Re-Sending message {notification.GetType()}");
+                if (timeToLive-- <= 0)
+                {
+                    throw;
+                }
+            }
+        }
     }
 
     public Task Delete(TId id) =>

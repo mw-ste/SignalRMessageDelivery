@@ -8,8 +8,8 @@ namespace Backend.SignalR;
 public interface ISignalRDispatcher
 {
     Task PublishClientMessageAnswer(
-        MessageContext messageContext,
-        string messageAnswer);
+        SignalRMessageContext messageContext,
+        string answer);
 }
 
 public class SignalRDispatcher : ISignalRDispatcher
@@ -25,17 +25,16 @@ public class SignalRDispatcher : ISignalRDispatcher
         _mediator = mediator;
     }
 
-    public async Task PublishClientMessageAnswer(MessageContext messageContext, string messageAnswer)
+    public async Task PublishClientMessageAnswer(SignalRMessageContext signalRMessageContext, string answer)
     {
+        var messageContext = signalRMessageContext.MessageContext;
         var pendingMessage = await _pendingMessageRepository.TryFind(messageContext.MessageId);
         if (pendingMessage == null)
         {
             return;
         }
 
-        await _pendingMessageRepository.Delete(messageContext.MessageId);
-
-        var @event = new MessageAnswerReceivedEvent(messageContext.Receiver, messageContext.Sender, messageAnswer, messageContext.MessageId);
-        await _mediator.Publish(@event);
+        pendingMessage.HandleAnswer(signalRMessageContext, answer);
+        await _pendingMessageRepository.Save(pendingMessage);
     }
 }

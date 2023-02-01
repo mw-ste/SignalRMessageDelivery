@@ -1,5 +1,6 @@
 using Backend.Aggregates;
 using Backend.Database;
+using Shared;
 using Xunit;
 
 namespace Backend.Tests;
@@ -20,12 +21,12 @@ public class SenderDatabaseShould
     {
         var sender = new Sender(SenderId);
         sender.SendMessage("Message", "Client");
-        sender.ReceiveAnswer("Answer", "Client", "MessageId");
+        sender.ReceiveAnswer(new MessageContext("Client", SenderId, "MessageId"), "Answer");
 
         await _sut.Save(sender);
         var result = await _sut.TryFind(SenderId);
 
         Assert.NotNull(result);
-        Assert.Equal(2, result.MessageLog.Count);
+        Assert.Equal(2, result!.MessageLog.Count);
     }
 }
