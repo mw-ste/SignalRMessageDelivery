@@ -1,5 +1,5 @@
 ﻿namespace Backend.Database;
 
-public class DatabaseTagMismatchException : Exception
+public class DatabaseTagMismatchException : ReTryableException
 {
 }

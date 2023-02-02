@@ -15,9 +15,11 @@ builder.Services.AddControllers();
 
 builder.Services.AddSingleton<ISenderDatabase, SenderInMemoryDatabase>();
 builder.Services.AddSingleton<IPendingMessageDatabase, PendingMessageInMemoryDatabase>();
+builder.Services.AddSingleton<ISignalRConnectionDatabase, SignalRConnectionInMemoryDatabase>();
 
 builder.Services.AddScoped<IPendingMessageRepository, PendingMessageRepository>();
 builder.Services.AddScoped<ISenderRepository, SenderRepository>();
+builder.Services.AddScoped<ISignalRConnectionRepository, SignalRConnectionRepository>();
 
 builder.Services.AddScoped<ISignalRGateway, SignalRGateway>();
 builder.Services.AddScoped<ISignalRDispatcher, SignalRDispatcher>();

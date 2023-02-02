@@ -61,7 +61,7 @@ public abstract class Repository<T, TId> : IRepository<T, TId>
     }
 
     private async Task SendEvent(INotification notification) => 
-        await _mediator.PublishWithRetryOnException<DatabaseTagMismatchException>(notification);
+        await _mediator.PublishWithRetryOnException<ReTryableException>(notification);
 
     public Task Delete(TId id) =>
         _database.Delete(id);

@@ -10,6 +10,9 @@ public interface ISignalRDispatcher
     Task PublishClientMessageAnswer(
         SignalRMessageContext messageContext,
         string answer);
+
+    Task AddSignalRConnection(string clientName, string connectionId);
+    Task RemoveSignalRConnection(string connectionId);
 }
 
 public class SignalRDispatcher : ISignalRDispatcher
@@ -37,4 +40,10 @@ public class SignalRDispatcher : ISignalRDispatcher
         pendingMessage.HandleAnswer(signalRMessageContext, answer);
         await _pendingMessageRepository.Save(pendingMessage);
     }
+
+    public Task AddSignalRConnection(string clientName, string connectionId) => 
+        _mediator.Send(new AddSignalRConnectionCommand(clientName, connectionId));
+
+    public Task RemoveSignalRConnection(string connectionId) => 
+        _mediator.Send(new RemoveSignalRConnectionCommand(connectionId));
 }

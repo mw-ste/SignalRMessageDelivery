@@ -25,6 +25,13 @@ public class SignalRHub : Hub<ISignalRClient>, ISignalRHub
     public async Task RegisterClient(string clientId)
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, clientId);
+        await _signalRDispatcher.AddSignalRConnection(clientId, Context.ConnectionId);
         await Clients.Caller.ReceiveRegistrationSuccess();
+    }
+
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        await _signalRDispatcher.RemoveSignalRConnection(Context.ConnectionId);
+        await base.OnDisconnectedAsync(exception);
     }
 }

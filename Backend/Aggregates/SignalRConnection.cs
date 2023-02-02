@@ -3,6 +3,7 @@
 public class SignalRConnection : Aggregate<string>
 {
     public string ConnectionId { get; set; }
+    public string ClientName => Id;
 
     public SignalRConnection(
         string clientName,
