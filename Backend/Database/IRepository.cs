@@ -60,27 +60,8 @@ public abstract class Repository<T, TId> : IRepository<T, TId>
         return Task.WhenAll(tasks);
     }
 
-    private async Task SendEvent(INotification notification)
-    {
-        var timeToLive = 3;
-
-        while (true)
-        {
-            try
-            {
-                await _mediator.Publish(notification);
-                return;
-            }
-            catch(DatabaseTagMismatchException)
-            {
-                _logger.LogWarning($"Re-Sending message {notification.GetType()}");
-                if (timeToLive-- <= 0)
-                {
-                    throw;
-                }
-            }
-        }
-    }
+    private async Task SendEvent(INotification notification) => 
+        await _mediator.PublishWithRetryOnException<DatabaseTagMismatchException>(notification);
 
     public Task Delete(TId id) =>
         _database.Delete(id);
